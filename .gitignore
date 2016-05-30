@@ -1,0 +1,11 @@
+## Temporary files ##
+*~
+*.tmp
+
+## OS generated files ##
+.DS_Store*
+desktop.ini
+Thumbs.db
+
+# The following ignores are drawn from github@github:gitignore/Python.gitignore.
+*.py[cod]
