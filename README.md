@@ -21,4 +21,4 @@ Running `python sc_pic.py xxx_meas.scpic` produces a file called `xxx_meas.tikz`
 
 The PDF you get from LaTeXing this document should look like this:
 
-[!Pretty nice, no?](xxx_meas.png)
+![Pretty nice, no?](xxx_meas.png)
