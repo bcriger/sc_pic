@@ -9,3 +9,15 @@ Thumbs.db
 
 # The following ignores are drawn from github@github:gitignore/Python.gitignore.
 *.py[cod]
+
+#Input/Output from the program
+*.scpic
+*.tikz
+*.tex
+*.pdf
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.dvi
+*.ps
