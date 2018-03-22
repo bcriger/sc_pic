@@ -72,6 +72,8 @@ def file_to_args(flnm):
     """
     with open(flnm, 'rb') as phil:
         lns = phil.readlines()
+        if type(lns[0]) == bytes:
+            lns = [ln.decode("utf-8") for ln in lns]
 
     arg_d = {}
     
@@ -82,7 +84,7 @@ def file_to_args(flnm):
     n_tls = max(len(v) for v in arg_d.values())
 
     for tag, typ, ext in zip(TAGS, TYPES, EXTEND):
-        arg_d[tag] = map(typ, arg_d[tag])
+        arg_d[tag] = list(map(typ, arg_d[tag]))
         if ext and (len(arg_d[tag]) == 1):
             arg_d[tag] = [arg_d[tag][0] for idx in range(n_tls)]
 
@@ -106,44 +108,49 @@ def sc_tikz(o_x, o_y, d_x, d_y, nudge, bl_col, oth_col):
     output_strs.append(scope_stmt.format((o_x, o_y)))
     
     output_strs.append(r'% fill grid squares with background colours')
-    bl_range = map(draw_tfm, sym_coords(*sz))
-    oth_range = map(draw_tfm, skew_coords(*sz))
+    bl_range = list(map(draw_tfm, sym_coords(*sz)))
+    oth_range = list(map(draw_tfm, skew_coords(*sz)))
     bl_crds, oth_crds = tikz_crds(bl_range), tikz_crds(oth_range)
     for crds, col in zip([bl_crds, oth_crds], [bl_col, oth_col]):
+        # output_strs.extend([''.join([r'\foreach \x/\y in {', crds, r'}{']),
+        #                     ''.join([r'    \fill[', col, r'] (\x, \y) rectangle +(2,2);']),
+        #                     r'}'])
         output_strs.extend([''.join([r'\foreach \x/\y in {', crds, r'}{']),
-                            ''.join([r'    \fill[', col, r'] (\x, \y) rectangle +(2,2);']),
+                            ''.join([r'    \filldraw[gridline, fill=', col, r'] (\x, \y) rectangle +(2,2);']),
                             r'}'])
 
-    output_strs.append(r'% draw grid')
-    corner_crds = [c + 1 for c in bl_range[0]] + [2 * d_x, 2 * d_y]
-    styl_str = r'\draw[gridline, step=2, shift = {(-1,-1)}]'
-    grid_str = ' ({}, {}) grid ({}, {});'.format(*corner_crds)
-    output_strs.append(styl_str + grid_str)
+    # output_strs.append(r'% draw grid')
+    # corner_crds = [c + 1 for c in bl_range[0]] + [2 * d_x, 2 * d_y]
+    # styl_str = r'\draw[gridline, step=2, shift = {(-1,-1)}]'
+    # grid_str = ' ({}, {}) grid ({}, {});'.format(*corner_crds)
+    # output_strs.append(styl_str + grid_str)
     
     output_strs.append(r'% draw/fill arcs')
     
     #calculate arc starting points by first finding neighbouring squares
     if nudge:
         arc_starts = {
-            'bottom' : filter(lambda pt: pt[1] == 0, skew_coords(*sz)),
-            'right' : filter(lambda pt: pt[0] == sz[0] - 1, sym_coords(*sz)),
-            'top' : filter(lambda pt: pt[1] == sz[1] - 1, skew_coords(*sz)),
-            'left' :  filter(lambda pt: pt[0] == 0, sym_coords(*sz))
+            'bottom' : list(filter(lambda pt: pt[1] == 0, skew_coords(*sz))),
+            'right' : list(filter(lambda pt: pt[0] == sz[0] - 1, sym_coords(*sz))),
+            'top' : list(filter(lambda pt: pt[1] == sz[1] - 1, skew_coords(*sz))),
+            'left' :  list(filter(lambda pt: pt[0] == 0, sym_coords(*sz)))
         }
     else:
         arc_starts = {
-            'bottom' : filter(lambda pt: pt[1] == 0, sym_coords(*sz)),
-            'right' : filter(lambda pt: pt[0] == sz[0] - 1, skew_coords(*sz)),
-            'top' : filter(lambda pt: pt[1] == sz[1] - 1, sym_coords(*sz)),
-            'left' :  filter(lambda pt: pt[0] == 0, skew_coords(*sz))
+            'bottom' : list(filter(lambda pt: pt[1] == 0, sym_coords(*sz))),
+            'right' : list(filter(lambda pt: pt[0] == sz[0] - 1, skew_coords(*sz))),
+            'top' : list(filter(lambda pt: pt[1] == sz[1] - 1, sym_coords(*sz))),
+            'left' :  list(filter(lambda pt: pt[0] == 0, skew_coords(*sz)))
         }
     #scale and shift
     for key in arc_starts.keys():
-        new_pts = map(list, map(draw_tfm, arc_starts[key]))
+        new_pts = list(map(list, map(draw_tfm, arc_starts[key])))
         for tpl in new_pts:
             tpl[0] += SHIFTS[key][0]
             tpl[1] += SHIFTS[key][1]
-        arc_starts[key] = tikz_crds(new_pts) 
+        arc_starts[key] = tikz_crds(new_pts)
+        # print(tikz_crds(new_pts))
+        # print(arc_starts[key]) 
     
     if nudge:
         colours = {'top' : bl_col, 'bottom' : bl_col, 'left' : oth_col, 'right' : oth_col}
@@ -154,7 +161,7 @@ def sc_tikz(o_x, o_y, d_x, d_y, nudge, bl_col, oth_col):
         output_strs.extend([''.join([r'\foreach \x/\y in {', arc_starts[key] , r'}{']),
                                 ''.join([r'    \filldraw[gridline, fill = ', colours[key], r'] (\x, \y) arc {} -- cycle;'.format(ARC_TYPES[key])]),
                                 r'}'])
-        
+    
     output_strs.append(r'\end{scope}')
     return output_strs
 
@@ -176,7 +183,7 @@ def main(flnm):
     out_lines.append(r'\end{tikzpicture}')
 
     with open(out_nm, 'wb') as phil:
-        phil.writelines(map(lambda st: st + '\n', out_lines))
+        phil.writelines(map(lambda st: bytes(st + '\n', "utf-8"), out_lines))
 
     pass
 
